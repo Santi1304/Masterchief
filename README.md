@@ -2,6 +2,14 @@
 
 Actividad del diplomado · **Dra. Elda C. Morales**
 
+> ### ✨ Cambios de esta versión (entrega de la actividad)
+> | # | Cambio | Dónde |
+> |---|---|---|
+> | 1 | **LLM:** se mantiene la API de Anthropic (Claude, `claude-haiku-5-5`) con SDK `anthropic==2.1.0`, tiempo máximo y reintentos acotados | `mesa/agentes.py`, `requirements.txt` |
+> | 2 | **Nueva personalidad de Vera** ("mesa de dinero": directa y escéptica, para inversionista experimentado, formato tipo terminal con *punto ciego*). **Nuevo tema de Euler**: momentum frente al rango anual y comparación con competidores; nuevo indicador en Python **distancia al máximo anual** = (P_max − P) / P_max × 100 | `mesa/agentes.py` |
+> | 3 | **Cron:** cada 15 min lun-vie de 07:00 a 15:45 CDMX (horario de la bolsa de NY) + 1 revisión diaria el fin de semana, en lugar de cada 10 min las 24 h | `.github/workflows/mesa-financiera.yml` |
+> | 4 | **Seguridad:** 9 hallazgos corregidos con evidencia y pruebas (bot cerrado por defecto, token oculto en errores, validación de la ficha contra *prompt injection*, topes de uso, acciones fijadas por SHA, Dependabot…) | [`SECURITY.md`](SECURITY.md), `tests/test_seguridad.py` |
+
 Un ecosistema de **tres agentes de IA** que trabajan en cadena: el resultado de uno es la entrada del siguiente.
 Tú das la orden desde **Telegram**, **Batuta** (el orquestador) dirige y tres especialistas hacen el trabajo:
 
@@ -9,7 +17,7 @@ Tú das la orden desde **Telegram**, **Batuta** (el orquestador) dirige y tres e
 |---|---|---|
 | **Iris** · La Recolectora | Curiosa y meticulosa; jamás inventa un dato | Consulta datos reales de Alpha Vantage por MCP |
 | **Euler** · El Analista | Riguroso con los números | Python calcula; Claude interpreta |
-| **Vera** · La Comunicadora | Clara, breve y honesta | Redacta la nota final para Telegram |
+| **Vera** · La Comunicadora *(edición mesa de dinero)* | Directa, sobria y escéptica; escribe para inversionistas experimentados | Redacta la nota final para Telegram |
 
 ```
 Tú en Telegram: /analiza AAPL

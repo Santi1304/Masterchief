@@ -1,12 +1,17 @@
 # Mesa Financiera en la nube: funciona con tu computadora apagada.
-#  · Cada 10 minutos revisa si escribiste /analiza TICKER en Telegram y responde.
+#  · CRON PERSONALIZADO: cada 15 minutos de lunes a viernes, de 07:00 a 15:45 hora de CDMX
+#    (13:00-21:45 UTC), que cubre la sesión de la bolsa de Nueva York (9:30-16:00 hora de NY).
+#    Fuera de ese horario los precios no cambian, así que revisar cada 10 min las 24 h gastaba
+#    ~144 ejecuciones al día; ahora son 36 en días hábiles (9 h × 4) y 1 al día el fin de semana.
+#  · Sábado y domingo revisa una vez (09:07 CDMX) para no perder mensajes: Telegram los guarda solo 24 h.
 #  · También puedes lanzarlo a mano (incluso desde la app de GitHub en tu celular):
 #    Actions → mesa-financiera → Run workflow → escribe el ticker.
 name: mesa-financiera
 
 on:
   schedule:
-    - cron: "*/10 * * * *"          # hora UTC; GitHub puede retrasar unos minutos las ejecuciones
+    - cron: "*/15 13-21 * * 1-5"    # hora UTC; GitHub puede retrasar unos minutos las ejecuciones
+    - cron: "7 15 * * 0,6"          # fin de semana: 1 revisión al día (09:07 CDMX)
   workflow_dispatch:
     inputs:
       ticker:
@@ -37,8 +42,11 @@ jobs:
       MODO_SIMULACION: ${{ inputs.simulacion && '1' || '0' }}
       TICKER: ${{ inputs.ticker }}  # se pasa como variable, nunca se pega dentro del comando
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      # [SEGURIDAD] Acciones fijadas por SHA (inmutable) y no por etiqueta (una etiqueta se puede mover).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+        with:
+          persist-credentials: false   # [SEGURIDAD] no deja el token de GitHub guardado en el disco
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0   # v7.1.0
         with:
           python-version: "3.12"
           cache: pip
@@ -54,7 +62,7 @@ jobs:
 
       - name: Guardar evidencias
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
         with:
           name: evidencias-${{ github.run_number }}
           path: salidas/

@@ -31,8 +31,35 @@ MODO_CLASE = _bandera("MODO_CLASE", "1")                  # 1 = muestra cada ent
 # Modo simulación: sin llaves de IA ni de datos. Se activa solo o con MODO_SIMULACION=1.
 MODO_SIMULACION = _bandera("MODO_SIMULACION") or not (ANTHROPIC_API_KEY and ALPHAVANTAGE_API_KEY)
 
-MAX_ANALISIS_POR_RUN = int(_texto("MAX_ANALISIS_POR_RUN", "3"))   # cuida la cuota de Alpha Vantage
+def _entero(nombre, defecto, minimo=0, maximo=10_000):
+    """Lee un entero acotado; un valor raro no tumba el programa ni quita los límites."""
+    try:
+        valor = int(_texto(nombre, str(defecto)))
+    except ValueError:
+        valor = defecto
+    return max(minimo, min(valor, maximo))
+
+
+MAX_ANALISIS_POR_RUN = _entero("MAX_ANALISIS_POR_RUN", 3, 1, 10)   # cuida la cuota de Alpha Vantage
+# [SEGURIDAD] Topes de uso: evitan que un error o un abuso agote la cuota de Alpha Vantage
+# (25 consultas/día, ~2 por análisis) o el saldo de la API de Claude.
+MAX_ANALISIS_POR_DIA = _entero("MAX_ANALISIS_POR_DIA", 10, 1, 12)
+SEGUNDOS_ENTRE_ANALISIS = _entero("SEGUNDOS_ENTRE_ANALISIS", 30, 0, 3600)
 CARPETA_SALIDAS = _texto("CARPETA_SALIDAS", "salidas")
+
+
+def ocultar_secretos(texto):
+    """[SEGURIDAD] Sustituye cualquier llave configurada por '***' antes de imprimir o enviar un texto.
+
+    Ejemplo real: un error de red de `requests` incluye la URL completa, y esa URL lleva el
+    token del bot (https://api.telegram.org/bot<TOKEN>/getUpdates). Sin este filtro el token
+    aparecería en la terminal, en Colab o en una captura de pantalla.
+    """
+    texto = str(texto)
+    for secreto in (TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY, ALPHAVANTAGE_API_KEY):
+        if secreto and len(secreto) >= 6:
+            texto = texto.replace(secreto, "***")
+    return texto
 
 
 def resumen():

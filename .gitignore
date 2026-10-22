@@ -7,3 +7,9 @@ salidas/
 .pytest_cache/
 .ipynb_checkpoints/
 .DS_Store
+
+# [SEGURIDAD] Cualquier variante de archivo de llaves
+.env.*
+!.env.example
+*.pem
+*.key

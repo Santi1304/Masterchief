@@ -1,6 +1,39 @@
 """Interpreta los mensajes que el alumno escribe en Telegram (lo comparten el bot continuo y GitHub Actions)."""
+import time
+from datetime import datetime, timezone
+
+from . import config
 from .pipeline import normalizar_ticker, pipeline
 from .telegram_io import chat_autorizado, enviar
+
+
+class LimiteDeUso:
+    """[SEGURIDAD] Tope diario y pausa mínima entre análisis.
+
+    Cada análisis real gasta ~2 consultas de Alpha Vantage (25/día gratis) y 3 llamadas a Claude.
+    Sin tope, un mensaje repetido (o un bucle) agotaría la cuota y el saldo.
+    """
+
+    def __init__(self):
+        self.dia, self.usados, self.ultimo = None, 0, 0.0
+
+    def permitir(self, ahora=None):
+        """Devuelve None si se permite el análisis, o el motivo por el que se rechaza."""
+        ahora = time.time() if ahora is None else ahora
+        hoy = datetime.fromtimestamp(ahora, timezone.utc).date()
+        if hoy != self.dia:
+            self.dia, self.usados = hoy, 0
+        if self.usados >= config.MAX_ANALISIS_POR_DIA:
+            return (f"⏳ Llegaste al tope de {config.MAX_ANALISIS_POR_DIA} análisis por hoy "
+                    "(cuida tu cuota de Alpha Vantage). Intenta mañana.")
+        espera = config.SEGUNDOS_ENTRE_ANALISIS - (ahora - self.ultimo)
+        if self.ultimo and espera > 0:
+            return f"⏳ Espera {int(espera) + 1} s antes del siguiente análisis."
+        self.usados, self.ultimo = self.usados + 1, ahora
+        return None
+
+
+LIMITE = LimiteDeUso()
 
 AYUDA = ("🤖 Mesa Financiera de 3 agentes\n"
          "/analiza TICKER → ejemplo: /analiza AAPL\n"
@@ -29,6 +62,11 @@ def atender(mensaje):
         ticker = normalizar_ticker(partes[1] if len(partes) > 1 else "")
     except ValueError:
         enviar(chat_id, "Escribe un ticker válido. Ejemplo: /analiza MSFT")
+        return None
+
+    motivo = LIMITE.permitir()
+    if motivo:
+        enviar(chat_id, motivo)
         return None
 
     try:

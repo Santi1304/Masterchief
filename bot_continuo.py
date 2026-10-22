@@ -5,8 +5,6 @@ Para que funcione con la computadora apagada usa GitHub Actions (revisar_telegra
 """
 import time
 
-import requests
-
 from mesa import config
 from mesa.comandos import atender
 from mesa.telegram_io import obtener_mensajes, preparar_polling, verificar_bot
@@ -25,9 +23,9 @@ def main():
                     try:
                         atender(actualizacion["message"])
                     except Exception as error:
-                        print(f"⚠️ {type(error).__name__}: {error}")
-        except requests.RequestException as error:
-            print("Conexión inestable, reintento en 5 s:", error)
+                        print(f"⚠️ {type(error).__name__}: {config.ocultar_secretos(error)}")
+        except ConnectionError as error:                   # [SEGURIDAD] el mensaje ya viene sin token
+            print("Conexión inestable, reintento en 5 s:", config.ocultar_secretos(error))
             time.sleep(5)
 
 

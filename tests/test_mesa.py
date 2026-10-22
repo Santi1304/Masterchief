@@ -14,6 +14,7 @@ from mesa import comandos                                  # noqa: E402
 def simulacion(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "MODO_SIMULACION", True)
     monkeypatch.setattr(config, "CARPETA_SALIDAS", str(tmp_path))
+    monkeypatch.setattr(comandos, "LIMITE", comandos.LimiteDeUso())     # contador limpio en cada prueba
 
 
 def test_formula_posicion_rango_52_semanas():
@@ -124,7 +125,7 @@ def test_revision_de_github_actions_atiende_y_confirma(monkeypatch):
 
 
 def test_revision_sin_token_termina_sin_error(monkeypatch, capsys):
-    """Una copia de la plantilla sin Secrets no debe marcar error en Actions cada 10 minutos."""
+    """Una copia de la plantilla sin Secrets no debe marcar error en Actions en cada revisión."""
     import revisar_telegram as rt
     monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "")
     rt.main()

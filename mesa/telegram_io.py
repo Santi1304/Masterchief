@@ -12,10 +12,25 @@ def _url(metodo):
     return f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/{metodo}"
 
 
+def _peticion(verbo, metodo, timeout=20, **kwargs):
+    """[SEGURIDAD] Llama a la Bot API sin filtrar el token en los errores.
+
+    Los errores de `requests` incluyen la URL, y la URL incluye el token. Aquí se reemplaza
+    por un error genérico (sin URL) y con cualquier secreto oculto.
+    """
+    try:
+        respuesta = requests.request(verbo, _url(metodo), timeout=timeout, **kwargs)
+        return respuesta.json()
+    except (requests.RequestException, ValueError) as error:
+        raise ConnectionError(
+            f"Fallo de red con Telegram en {metodo} ({type(error).__name__}): "
+            + config.ocultar_secretos(error)[:200]) from None
+
+
 def enviar(chat_id, texto):
-    respuesta = requests.post(_url("sendMessage"),
-                              data={"chat_id": chat_id, "text": texto[:LIMITE_MENSAJE]}, timeout=20)
-    datos = respuesta.json()
+    datos = _peticion("POST", "sendMessage",
+                      data={"chat_id": chat_id, "text": str(texto)[:LIMITE_MENSAJE],
+                            "disable_web_page_preview": "true"})
     if not datos.get("ok"):
         raise RuntimeError(f"Telegram rechazó el mensaje: {datos.get('description')}")
     return datos
@@ -23,7 +38,7 @@ def enviar(chat_id, texto):
 
 def verificar_bot():
     """Devuelve el @usuario del bot o lanza un error claro si el token es inválido."""
-    datos = requests.get(_url("getMe"), timeout=20).json()
+    datos = _peticion("GET", "getMe")
     if not datos.get("ok"):
         raise RuntimeError("Token de Telegram inválido. Revísalo con @BotFather.")
     return datos["result"]["username"]
@@ -31,7 +46,7 @@ def verificar_bot():
 
 def preparar_polling():
     """Quita un webhook previo; si existe, getUpdates no funciona."""
-    requests.get(_url("deleteWebhook"), timeout=20)
+    _peticion("GET", "deleteWebhook")
 
 
 def obtener_mensajes(offset=None, espera=0):
@@ -39,7 +54,7 @@ def obtener_mensajes(offset=None, espera=0):
     parametros = {"timeout": espera}
     if offset is not None:
         parametros["offset"] = offset
-    datos = requests.get(_url("getUpdates"), params=parametros, timeout=espera + 15).json()
+    datos = _peticion("GET", "getUpdates", params=parametros, timeout=espera + 15)
     if not datos.get("ok"):
         raise RuntimeError(f"getUpdates falló: {datos.get('description')}")
     return datos["result"]
@@ -51,5 +66,9 @@ def confirmar_leidos(ultimo_update_id):
 
 
 def chat_autorizado(chat_id):
-    """Si TELEGRAM_CHAT_ID está configurado, solo ese chat puede usar el bot."""
-    return not config.TELEGRAM_CHAT_ID or str(chat_id) == config.TELEGRAM_CHAT_ID
+    """[SEGURIDAD] Solo el chat de TELEGRAM_CHAT_ID puede usar el bot.
+
+    Antes, si TELEGRAM_CHAT_ID estaba vacío el bot atendía a CUALQUIER persona que lo encontrara
+    (y gastaba tu cuota y tu saldo). Ahora falla cerrado: sin chat configurado, no atiende a nadie.
+    """
+    return bool(config.TELEGRAM_CHAT_ID) and str(chat_id) == config.TELEGRAM_CHAT_ID

@@ -20,7 +20,7 @@ def main():
             print(f"  Telegram                ✅ bot @{verificar_bot()} responde")
         except Exception as error:
             errores += 1
-            print(f"  Telegram                ❌ {error}")
+            print(f"  Telegram                ❌ {config.ocultar_secretos(error)}")
 
     if "--mcp" in sys.argv:
         if config.MODO_SIMULACION:
