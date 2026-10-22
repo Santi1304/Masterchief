@@ -25,7 +25,7 @@ SDK fijado en `anthropic==2.1.0`, `timeout=60 s` y `max_retries=2` (`mesa/agente
 Ver [`SECURITY.md`](../SECURITY.md): 9 hallazgos con evidencia (archivo:línea), corrección y prueba automática.
 
 ## 5. Liga a GitHub
-`https://github.com/<TU_USUARIO>/mesa-financiera-telegram` ← sustituir
+https://github.com/Santi1304/Masterchief
 
 ## 6. Screenshot de Telegram en tiempo real
 Opción recomendada, **Codespaces** (usa este código actualizado):
