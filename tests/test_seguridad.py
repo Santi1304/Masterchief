@@ -117,3 +117,14 @@ def test_errores_de_telegram_se_explican():
     assert "TELEGRAM_BOT_TOKEN" in telegram_io._explicar_error({"ok": False, "error_code": 404, "description": "Not Found"})
     assert "TELEGRAM_CHAT_ID" in telegram_io._explicar_error({"ok": False, "error_code": 400,
                                                              "description": "Bad Request: chat not found"})
+
+
+@pytest.mark.parametrize("token, pista", [
+    ("", "vacío"), ("bot123456789:" + "A" * 35, "empieza con 'bot'"), ("123456789", "no tiene ':'"),
+    ('"123456789:' + "A" * 35 + '"', "comillas"), ("123456789:AAH", "cortado"),
+    ("123456789:" + "A" * 35, "revocado")])
+def test_diagnostico_token_no_revela_el_valor(token, pista):
+    texto = "; ".join(config.diagnostico_token(token))
+    assert pista in texto
+    if len(token) > 12:
+        assert token.strip('"') not in texto

@@ -32,7 +32,7 @@ def _explicar_error(datos):
     descripcion = str(datos.get("description", ""))
     if datos.get("error_code") in (401, 404) or descripcion in ("Not Found", "Unauthorized"):
         return ("Telegram no reconoce TELEGRAM_BOT_TOKEN (respuesta: " + descripcion + "). "
-                "Copia de nuevo el token de @BotFather, completo y sin la palabra 'bot', comillas ni espacios.")
+                "Diagnóstico del formato (sin mostrar el valor): " + "; ".join(config.diagnostico_token()))
     if "chat not found" in descripcion.lower():
         return ("Telegram no encuentra TELEGRAM_CHAT_ID. Escribe 'hola' a tu bot y ejecuta "
                 "python obtener_chat_id.py para obtener el número correcto.")

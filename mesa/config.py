@@ -48,6 +48,32 @@ SEGUNDOS_ENTRE_ANALISIS = _entero("SEGUNDOS_ENTRE_ANALISIS", 30, 0, 3600)
 CARPETA_SALIDAS = _texto("CARPETA_SALIDAS", "salidas")
 
 
+def diagnostico_token(token=None):
+    """Revisa el FORMATO del token de Telegram sin mostrar su valor.
+
+    Un token válido se ve así: 1234567890:AAH...  (8-10 dígitos, dos puntos y ~35 caracteres).
+    """
+    import re
+    token = TELEGRAM_BOT_TOKEN if token is None else token
+    if not token:
+        return ["está vacío (revisa que el nombre del secreto sea exactamente TELEGRAM_BOT_TOKEN)"]
+    problemas = []
+    if token.lower().startswith("bot"):
+        problemas.append("empieza con 'bot': quítalo, pega solo lo que va después")
+    if "api.telegram.org" in token or "/" in token:
+        problemas.append("parece una URL completa: pega solo el token")
+    if any(c in token for c in "\"' <>"):
+        problemas.append("tiene comillas, espacios o < >: pégalo limpio")
+    if ":" not in token:
+        problemas.append("no tiene ':' (¿pegaste el chat_id o el nombre del bot en vez del token?)")
+    elif not re.fullmatch(r"\d{6,12}:[A-Za-z0-9_-]{30,50}", token.removeprefix("bot")):
+        izq, _, der = token.partition(":")
+        problemas.append(f"formato inesperado: {len(izq)} caracteres antes de ':' (esperado 8-10 dígitos) "
+                         f"y {len(der)} después (esperado ~35); puede estar cortado o incompleto")
+    return problemas or ["el formato es correcto, pero Telegram no lo reconoce: el token fue revocado o "
+                         "es de otro bot; genera uno nuevo en @BotFather → /mybots → API Token"]
+
+
 def ocultar_secretos(texto):
     """[SEGURIDAD] Sustituye cualquier llave configurada por '***' antes de imprimir o enviar un texto.
 
