@@ -27,12 +27,24 @@ def _peticion(verbo, metodo, timeout=20, **kwargs):
             + config.ocultar_secretos(error)[:200]) from None
 
 
+def _explicar_error(datos):
+    """Traduce los errores más comunes de Telegram a una indicación concreta."""
+    descripcion = str(datos.get("description", ""))
+    if datos.get("error_code") in (401, 404) or descripcion in ("Not Found", "Unauthorized"):
+        return ("Telegram no reconoce TELEGRAM_BOT_TOKEN (respuesta: " + descripcion + "). "
+                "Copia de nuevo el token de @BotFather, completo y sin la palabra 'bot', comillas ni espacios.")
+    if "chat not found" in descripcion.lower():
+        return ("Telegram no encuentra TELEGRAM_CHAT_ID. Escribe 'hola' a tu bot y ejecuta "
+                "python obtener_chat_id.py para obtener el número correcto.")
+    return f"Telegram rechazó el mensaje: {descripcion}"
+
+
 def enviar(chat_id, texto):
     datos = _peticion("POST", "sendMessage",
                       data={"chat_id": chat_id, "text": str(texto)[:LIMITE_MENSAJE],
                             "disable_web_page_preview": "true"})
     if not datos.get("ok"):
-        raise RuntimeError(f"Telegram rechazó el mensaje: {datos.get('description')}")
+        raise RuntimeError(_explicar_error(datos))
     return datos
 
 
@@ -40,7 +52,7 @@ def verificar_bot():
     """Devuelve el @usuario del bot o lanza un error claro si el token es inválido."""
     datos = _peticion("GET", "getMe")
     if not datos.get("ok"):
-        raise RuntimeError("Token de Telegram inválido. Revísalo con @BotFather.")
+        raise RuntimeError(_explicar_error(datos))
     return datos["result"]["username"]
 
 

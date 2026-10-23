@@ -111,3 +111,9 @@ def test_vera_mesa_de_dinero_en_simulacion():
     nota = pl.pipeline("AAPL", avisar=lambda t: None)["entrega_3_nota"]
     assert "AAPL | 150.0 USD" in nota and "Punto ciego" in nota and "Dist. al máx" in nota
     assert nota.endswith(agentes.DESCARGO)
+
+
+def test_errores_de_telegram_se_explican():
+    assert "TELEGRAM_BOT_TOKEN" in telegram_io._explicar_error({"ok": False, "error_code": 404, "description": "Not Found"})
+    assert "TELEGRAM_CHAT_ID" in telegram_io._explicar_error({"ok": False, "error_code": 400,
+                                                             "description": "Bad Request: chat not found"})
