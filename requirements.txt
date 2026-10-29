@@ -1,5 +1,5 @@
 # [SEGURIDAD] Versiones fijas: cada instalación usa exactamente el mismo código ya probado.
 # Dependabot (.github/dependabot.yml) propone las actualizaciones.
-anthropic==2.1.0
+anthropic==2.3.0
 requests==2.34.2
 python-dotenv==1.2.4
